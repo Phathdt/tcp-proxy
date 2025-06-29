@@ -1,0 +1,72 @@
+networks:
+  traefik:
+    external: true
+    name: homelab_traefik
+
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - '8888:8888/tcp' # HTTP proxy
+      - '15432:15432/tcp' # PostgreSQL proxy
+      - '16379:16379/tcp' # Redis proxy
+      - '15433:15433/tcp' # PostgreSQL secondary proxy
+      - '16380:16380/tcp' # Redis sessions proxy
+    volumes:
+      - ./config/gluetun:/config
+      - ./data/network/gluetun:/gluetun
+    environment:
+      # VPN Configuration
+      - VPN_SERVICE_PROVIDER=custom
+      - VPN_TYPE=openvpn
+      - OPENVPN_CUSTOM_CONFIG=/config/config.ovpn
+      - OPENVPN_ASKPASS_FILE=/config/auth.txt
+
+      # OpenVPN flags to handle route conflicts
+      - OPENVPN_FLAGS=--pull-filter ignore "route-ipv6" --pull-filter ignore "ifconfig-ipv6"
+
+      # Proxy Configuration
+      - HTTPPROXY=on
+      - HTTPPROXY_LOG=on
+
+      # DNS Configuration - Use public DNS servers that work through VPN
+      - DOT=off
+      - DNS_ADDRESS=1.1.1.1
+      - DNS_KEEP_NAMESERVER=off
+
+      # Firewall Configuration
+      - FIREWALL=on
+      - FIREWALL_VPN_INPUT_PORTS=
+      - FIREWALL_INPUT_PORTS=8888,15432,16379,15433,16380
+
+      # Timezone
+      - TZ=Asia/Ho_Chi_Minh
+
+      # Logging
+      - LOG_LEVEL=info
+    networks:
+      - traefik
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.gluetun.rule=Host(`vpn.${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.gluetun.entrypoints=web'
+      - 'traefik.http.services.gluetun.loadbalancer.server.port=8000'
+
+  tcp-proxy:
+    image: phathdt379/tcp-proxy:latest
+    container_name: tcp-proxy
+    restart: unless-stopped
+    network_mode: 'service:gluetun'
+    depends_on:
+      - gluetun
+    volumes:
+      - ./config/tcp-proxy:/config:ro
+    environment:
+      - CONFIG_PATH=/config/proxies.yml
+      - TZ=Asia/Ho_Chi_Minh
