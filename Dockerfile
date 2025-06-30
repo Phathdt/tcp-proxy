@@ -6,17 +6,17 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o tcp-proxy ./main.go
 
-FROM alpine:3.22
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-s -w -extldflags=-static" \
+    -trimpath \
+    -o tcp-proxy ./main.go
 
-RUN apk --no-cache add ca-certificates
+FROM gcr.io/distroless/static:nonroot
 
 WORKDIR /app
-RUN chown nobody:nobody /app
-USER nobody:nobody
 
-COPY --from=builder --chown=nobody:nobody /app/tcp-proxy .
+COPY --from=builder /app/tcp-proxy ./tcp-proxy
 
 EXPOSE 15432 16379
 
