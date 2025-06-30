@@ -1,0 +1,28 @@
+proxies:
+  - name: "postgres-main"
+    local_host: "0.0.0.0"
+    local_port: 15432
+    remote_host: "10.0.1.10"
+    remote_port: 5432
+    enabled: true
+
+  - name: "redis-cache"
+    local_host: "0.0.0.0"
+    local_port: 16379
+    remote_host: "10.0.1.20"
+    remote_port: 6379
+    enabled: true
+
+  - name: "postgres-secondary"
+    local_host: "0.0.0.0"
+    local_port: 15433
+    remote_host: "10.0.1.30"
+    remote_port: 5432
+    enabled: false
+
+  - name: "redis-sessions"
+    local_host: "0.0.0.0"
+    local_port: 16380
+    remote_host: "10.0.1.40"
+    remote_port: 6379
+    enabled: false

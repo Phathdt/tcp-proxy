@@ -13,8 +13,12 @@ tcp-proxy/
 │   └── release.sh                 # Release helper script
 ├── config/
 │   ├── gluetun/                   # VPN configuration
+│   │   ├── config.ovpn            # Your OpenVPN configuration
+│   │   ├── auth.txt               # VPN credentials (create from example)
+│   │   └── auth.txt.example       # Template for VPN credentials
 │   └── tcp-proxy/
-│       └── proxies.yml            # Proxy configuration
+│       ├── proxies.yml            # Proxy configuration (create from example)
+│       └── proxies.yml.example    # Template for proxy configuration
 ├── main.go                        # TCP proxy implementation
 ├── go.mod                         # Go module dependencies
 ├── Dockerfile                     # Multi-platform Docker build
@@ -48,20 +52,18 @@ The TCP proxy service runs inside the same Docker network as Gluetun, so all con
 
 ## Setup
 
-### 1. Build the Docker Image
+### 1. Docker Image
 
-The image is automatically built and pushed via GitHub Actions when you create tags. For local development:
+The image is available on Docker Hub: **`phathdt379/tcp-proxy:latest`**
 
-```bash
-# Build the Docker image locally
-docker build -t phathdt379/tcp-proxy:latest .
-```
+The docker-compose.yml is already configured to use this image from Docker Hub, so no local building is required.
 
-This will:
-- Build the Go application using multi-stage Docker build
-- Create a minimal Alpine Linux image with the tcp-proxy binary
-- Run as non-root user (nobody:nobody) for security
-- Support both AMD64 and ARM64 architectures
+Features:
+- Built with Go 1.24.4 using multi-stage Docker build
+- Minimal distroless base image (only 4.82MB)
+- Runs as non-root user for security
+- Support for both AMD64 and ARM64 architectures
+- Static binary with optimized build flags
 
 ### 2. Place Your OpenVPN Configuration
 
@@ -72,6 +74,10 @@ If your VPN requires authentication, create `config/gluetun/auth.txt`:
 username
 password
 ```
+
+💡 **Tip:** Use the provided example files as templates:
+- Copy `config/gluetun/auth.txt.example` to `config/gluetun/auth.txt` and edit with your credentials
+- Copy `config/tcp-proxy/proxies.yml.example` to `config/tcp-proxy/proxies.yml` and configure your proxies
 
 #### OpenVPN Configuration for Containers
 
@@ -85,13 +91,19 @@ Most standard OpenVPN configurations need modifications to work properly in cont
    ```
    *Reason: Credential caching can cause issues in containers. gluetun handles authentication through the `auth.txt` file.*
 
-2. **Remove conflicting route directives** (if present):
+2. **Add authentication file reference**:
+   ```diff
+   + askpass /config/auth.txt
+   ```
+   *Reason: This tells OpenVPN where to find your username/password file in the container.*
+
+3. **Remove conflicting route directives** (if present):
    ```diff
    - setenv opt block-outside-dns # Prevent Windows 10 DNS leak
    ```
    *Reason: Container networking and gluetun handle DNS and routing automatically.*
 
-3. **IPv6 routes are automatically filtered** by docker-compose configuration:
+4. **IPv6 routes are automatically filtered** by docker-compose configuration:
    ```yaml
    OPENVPN_FLAGS=--pull-filter ignore "route-ipv6" --pull-filter ignore "ifconfig-ipv6"
    ```
@@ -120,6 +132,7 @@ proto udp
 remote vpn.example.com 1194
 auth SHA256
 cipher AES-128-GCM
+askpass /config/auth.txt           # ← Add this line for authentication
 tls-client
 ```
 
@@ -135,10 +148,11 @@ Common issues are usually related to:
 
 ### 3. Configure Proxies
 
-Create the configuration directory and edit `config/tcp-proxy/proxies.yml` to configure your proxy forwarding:
+Create your proxy configuration from the example template:
 
 ```bash
-mkdir -p config/tcp-proxy
+# Copy the example and edit with your settings
+cp config/tcp-proxy/proxies.yml.example config/tcp-proxy/proxies.yml
 ```
 
 The configuration file path can be customized using the `CONFIG_PATH` environment variable (default: `/config/proxies.yml`).

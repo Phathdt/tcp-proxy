@@ -9,26 +9,101 @@ tcp-proxy
 # Test binary, built with `go test -c`
 *.test
 
-# Output of the go coverage tool
+# Output of the go coverage tool, specifically files ending in .out
 *.out
+
+# Dependency directories
+vendor/
 
 # Go workspace file
 go.work
+
+# Build and binary directories
+build/
+dist/
+bin/
 
 # Config files with sensitive data
 config/gluetun/config.ovpn
 config/gluetun/auth.txt
 config/tcp-proxy/proxies.yml
 
-# Docker volumes
+# Docker volumes and data
 data/
+logs/
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Backup files
+*.bak
+*.backup
 
 # IDE files
 .vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
+*~
+
+# JetBrains IDEs
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
 
 # OS files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# Windows
+Desktop.ini
+
+# Security and certificates
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+
+# SSH keys
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# Coverage reports
+coverage.html
+coverage.xml
+*.cover
+
+# Profiling data
+*.prof
