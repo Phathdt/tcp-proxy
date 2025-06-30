@@ -38,7 +38,7 @@ tcp-proxy/
 - Comprehensive connection logging and error handling
 - 10-second connection timeout per attempt
 - No SSH keys required - only OpenVPN config needed
-- Integrated with existing homelab network stack
+- Self-contained service with minimal dependencies
 - Built with Go 1.24.4 for performance and reliability
 
 ## How It Works
@@ -279,13 +279,6 @@ docker build -t phathdt379/tcp-proxy:latest .
 docker buildx build --platform linux/amd64,linux/arm64 -t phathdt379/tcp-proxy:latest --push .
 ```
 
-### Docker Hub Setup
-
-To use the automated CI/CD, you need to set up these GitHub secrets:
-
-- `DOCKERHUB_USERNAME`: Your Docker Hub username
-- `DOCKERHUB_TOKEN`: Your Docker Hub access token (not password)
-
 ## Monitoring
 
 ### Check Logs
@@ -310,7 +303,14 @@ telnet localhost 16380  # Redis sessions
 ```
 
 ### VPN Status
-Visit `http://vpn.yourdomain.local` to check VPN status through Traefik.
+Check VPN status through Gluetun HTTP proxy:
+```bash
+# Check VPN connection status
+curl -s http://localhost:8888 | grep -i "your ip"
+
+# Or check gluetun logs for VPN status
+docker logs gluetun | tail -20
+```
 
 ## Troubleshooting
 
