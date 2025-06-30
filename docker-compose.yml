@@ -1,8 +1,3 @@
-networks:
-  traefik:
-    external: true
-    name: homelab_traefik
-
 services:
   gluetun:
     image: qmcgaw/gluetun:latest
@@ -50,13 +45,6 @@ services:
 
       # Logging
       - LOG_LEVEL=info
-    networks:
-      - traefik
-    labels:
-      - 'traefik.enable=true'
-      - 'traefik.http.routers.gluetun.rule=Host(`vpn.${DOMAIN_NAME}`)'
-      - 'traefik.http.routers.gluetun.entrypoints=web'
-      - 'traefik.http.services.gluetun.loadbalancer.server.port=8000'
 
   tcp-proxy:
     image: phathdt379/tcp-proxy:latest
