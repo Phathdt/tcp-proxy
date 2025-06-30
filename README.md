@@ -73,6 +73,66 @@ username
 password
 ```
 
+#### OpenVPN Configuration for Containers
+
+Most standard OpenVPN configurations need modifications to work properly in containerized environments with gluetun. Here are the common changes required:
+
+**⚠️ Important:** Your original `.ovpn` file may need these modifications:
+
+1. **Remove `auth-nocache` directive** (if present):
+   ```diff
+   - auth-nocache
+   ```
+   *Reason: Credential caching can cause issues in containers. gluetun handles authentication through the `auth.txt` file.*
+
+2. **Remove conflicting route directives** (if present):
+   ```diff
+   - setenv opt block-outside-dns # Prevent Windows 10 DNS leak
+   ```
+   *Reason: Container networking and gluetun handle DNS and routing automatically.*
+
+3. **IPv6 routes are automatically filtered** by docker-compose configuration:
+   ```yaml
+   OPENVPN_FLAGS=--pull-filter ignore "route-ipv6" --pull-filter ignore "ifconfig-ipv6"
+   ```
+   *Reason: IPv6 can cause connectivity issues in Docker containers.*
+
+**Example of a typical modification:**
+
+**Original `.ovpn` file:**
+```
+client
+dev tun
+proto udp
+remote vpn.example.com 1194
+auth SHA256
+cipher AES-128-GCM
+auth-nocache                     # ← Remove this line
+tls-client
+setenv opt block-outside-dns     # ← Remove this line
+```
+
+**Modified for container use:**
+```
+client
+dev tun
+proto udp
+remote vpn.example.com 1194
+auth SHA256
+cipher AES-128-GCM
+tls-client
+```
+
+**💡 Pro Tip:** If your VPN connection fails, check gluetun logs:
+```bash
+docker-compose logs gluetun
+```
+
+Common issues are usually related to:
+- Incompatible OpenVPN directives for containers
+- DNS configuration conflicts
+- Route conflicts with Docker networking
+
 ### 3. Configure Proxies
 
 Create the configuration directory and edit `config/tcp-proxy/proxies.yml` to configure your proxy forwarding:
